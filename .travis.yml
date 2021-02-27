@@ -1,0 +1,61 @@
+language: rust
+env:
+  global:
+    - REPO=yarner-bib
+
+os:
+  - linux
+  - windows
+  - osx
+
+rust:
+  - stable
+
+branches:
+  only:
+    - main
+    - "/^\\d+\\.\\d+\\.\\d+/"
+
+script:
+  - rustup component add rustfmt clippy
+  - cargo fmt -- --check
+  - cargo clippy --all-targets -- --deny warnings
+  - cargo test --verbose
+
+# Need to cache the whole `.cargo` directory to keep .crates.toml for
+# cargo-update to work
+cache:
+  directories:
+    - /home/travis/.cargo
+
+# But don't cache the cargo registry
+before_cache:
+  - rm -rf /home/travis/.cargo/registry
+
+before_deploy:
+  - cargo build --release
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      cp -f target/release/${REPO} . > /dev/null;
+      tar -czf ${REPO}-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz ${REPO};
+    fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      cp -f target/release/${REPO} . > /dev/null;
+      tar -czf ${REPO}-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz ${REPO};
+    fi
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then
+      cp -f target/release/${REPO}.exe . > /dev/null;
+      tar -czf ${REPO}-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz ${REPO}.exe;
+    fi
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  token:
+    secure: I0V4KU3uZ8dZkOrx0R+1r+x6esqZLsjwtnwDPoaGZAERBiXWKuLpOYAj3+BF5G441ZOYRDo95CICSfynIoIMj8Rp2HK28khb1j26MwIO9K7eA3XSkrJqNL36cGv/303xsl7dH8yiu9EQJ89W5aUL5+RYPSLuRiNQvbOEABzfLObwHpa7T3fCmLAsxK5AKbFOkwyiaouPtWGMd/vlINFQ+2R1syQSwwxQe0cAi0tpaOCKWY3jANm5RfjS0zH3E1XIi8FfJ7Zs1ja5sqMX7bMjkaxk9VeGKexj6/JBoKfPVqCDg2w2KeHYRJnVG0BSBQkR7yal6uT2T+FQg9pKGVHFr5D4r0vxalR5IHdB1Q2C4B1akbGL2+pqvI6XcUzydVNdfpN/atJ6N2YQG1fZ95CLN+D4ExZ/JoD6kjcWXH6nJ4zJUCOdE0kKZjtVvx/IVRguYlRFJHhKjasePZUv5YBlkOAaJWD3nqzfMCjF5wlcmZAfTMsUkTcE9RwSgo0vLvgiE82pDPCv4bvJ72JZqFtCo+bflkGdvGY05DcNeWmVk9zSFMmIlTB9Tuk/rrOs1sXqUWoIEeKTfH3IzvYUFqu5ba45TvHqX38g1gu59QHsYyWE0yPoq1vCQErdmh/9iozWn2bL69+v12Pg0Mgw5ZYrxcJK+88GiC5YcBmv7CjjygQ=
+  file: ${REPO}-${TRAVIS_TAG}-${TRAVIS_OS_NAME}.tar.gz
+  on:
+    tags: true
+    all_branches: true
