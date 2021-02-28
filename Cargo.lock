@@ -303,6 +303,7 @@ dependencies = [
  "linked_hash_set",
  "once_cell",
  "regex",
+ "toml",
  "yarner-lib",
 ]
 
