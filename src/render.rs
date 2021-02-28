@@ -5,7 +5,7 @@ use linked_hash_set::LinkedHashSet;
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use yarner_lib::{Document, Node, TextBlock};
 
 const REF_PATTERN: &str = r##"(-)?@([^\[\]\s\."#'(),={}%]+)"##;
@@ -73,7 +73,7 @@ pub fn render_citations(
 
     for mut node in document.nodes.iter_mut() {
         if let Node::Text(block) = &mut node {
-            render_citations_block(block, bibliography, &mut citations);
+            render_citations_block(block, bibliography, None, &mut citations);
         }
     }
 
@@ -83,13 +83,19 @@ pub fn render_citations(
 pub fn render_citations_all(
     documents: &mut HashMap<PathBuf, Document>,
     bibliography: &Bibliography,
+    refs_file: &PathBuf,
 ) -> LinkedHashSet<String> {
     let mut citations = LinkedHashSet::new();
 
-    for (_path, doc) in documents.iter_mut() {
+    for (path, doc) in documents.iter_mut() {
+        let rel_link = if path == refs_file {
+            None
+        } else {
+            Some(relative_link(refs_file, path))
+        };
         for mut node in doc.nodes.iter_mut() {
             if let Node::Text(block) = &mut node {
-                render_citations_block(block, bibliography, &mut citations);
+                render_citations_block(block, bibliography, rel_link.as_ref(), &mut citations);
             }
         }
     }
@@ -97,9 +103,20 @@ pub fn render_citations_all(
     citations
 }
 
+fn relative_link<P, B>(abs_link: P, root: B) -> String
+where
+    P: AsRef<Path>,
+    B: AsRef<Path>,
+{
+    pathdiff::diff_paths(&abs_link, root.as_ref().parent().unwrap())
+        .and_then(|p| p.as_path().to_str().map(|s| s.replace('\\', "/")))
+        .unwrap_or_else(|| "invalid path".to_owned())
+}
+
 fn render_citations_block(
     block: &mut TextBlock,
     bibliography: &Bibliography,
+    link_prefix: Option<&String>,
     citations: &mut LinkedHashSet<String>,
 ) {
     for line in block.text.iter_mut() {
@@ -109,7 +126,7 @@ fn render_citations_block(
                 let key = &caps[2];
                 if let Some(reference) = bibliography.get(key) {
                     citations.insert(key.to_owned());
-                    format::format_citation(reference, no_author)
+                    format::format_citation(reference, link_prefix, no_author)
                 } else {
                     caps.get(0).unwrap().as_str().to_owned()
                 }
@@ -137,21 +154,6 @@ mod test {
 "#;
 
     #[test]
-    fn render_citation() {
-        let bib = parse_bibliography(TEST_BIB).unwrap();
-
-        assert_eq!(
-            super::render_citation(bib.get("Klabnik2018").unwrap(), false),
-            "Klabnik 2018"
-        );
-
-        assert_eq!(
-            super::render_citation(bib.get("Klabnik2018").unwrap(), true),
-            "2018"
-        );
-    }
-
-    #[test]
     fn render_citations_block() {
         let bib = parse_bibliography(TEST_BIB).unwrap();
         let mut citations = LinkedHashSet::new();
@@ -160,10 +162,13 @@ mod test {
             text: vec!["A test citation: @Klabnik2018.".to_string()],
         };
 
-        super::render_citations_block(&mut block, &bib, &mut citations);
+        super::render_citations_block(&mut block, &bib, None, &mut citations);
 
         assert_eq!(citations.len(), 1);
-        assert_eq!(&block.text[0], "A test citation: Klabnik 2018.")
+        assert_eq!(
+            &block.text[0],
+            "A test citation: [Klabnik 2018](#cite-ref-Klabnik2018)."
+        )
     }
 
     #[test]
@@ -175,9 +180,12 @@ mod test {
             text: vec!["A test citation: -@Klabnik2018.".to_string()],
         };
 
-        super::render_citations_block(&mut block, &bib, &mut citations);
+        super::render_citations_block(&mut block, &bib, None, &mut citations);
 
         assert_eq!(citations.len(), 1);
-        assert_eq!(&block.text[0], "A test citation: 2018.")
+        assert_eq!(
+            &block.text[0],
+            "A test citation: [2018](#cite-ref-Klabnik2018)."
+        )
     }
 }
