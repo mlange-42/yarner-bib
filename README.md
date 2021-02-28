@@ -33,6 +33,7 @@ bibliography = "bibliography.bib"
 style = "author-year"
 refs-file = "References.md"
 placeholder = "[[_REFS_]]"
+render-key = true
 ```
 
 Cite using the BibTeX citation key, prefixed with `@`:

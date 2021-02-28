@@ -15,15 +15,18 @@ pub fn format_citation(reference: &Entry, link_prefix: Option<&String>, no_autho
     }
 }
 
-pub fn format_reference(item: &Entry) -> String {
+pub fn format_reference(item: &Entry, render_key: bool) -> String {
     let mut result = String::new();
     let anchor = format_ref_anchor(&item.key);
+    write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
+
+    if render_key {
+        write!(result, "[{}] ", item.key,).unwrap();
+    }
+
     write!(
         result,
-        "<a name=\"{}\" id=\"{}\"></a>[{}] {} ({}): **{}**",
-        anchor,
-        anchor,
-        item.key,
+        "{} ({}): **{}**",
         format_authors(item.author()),
         format_date(item.date()),
         item.title()

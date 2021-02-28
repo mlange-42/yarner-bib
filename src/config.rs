@@ -28,6 +28,7 @@ pub struct Config {
     pub citation_style: CitationStyle,
     pub refs_file: Option<String>,
     pub placeholder: String,
+    pub render_key: bool,
 }
 
 impl TryFrom<&toml::Value> for Config {
@@ -54,6 +55,10 @@ impl TryFrom<&toml::Value> for Config {
                 .and_then(|s| s.as_str())
                 .unwrap_or("[[_REFS_]]")
                 .to_owned(),
+            render_key: value
+                .get("render-key")
+                .and_then(|s| s.as_bool())
+                .unwrap_or(true),
         })
     }
 }
