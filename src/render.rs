@@ -38,7 +38,7 @@ fn render_citations_block(
                 let key = &caps[2];
                 if let Some(reference) = bibliography.get(key) {
                     citations.insert(key.to_owned());
-                    format!("{}", render_citation(reference, no_author))
+                    render_citation(reference, no_author)
                 } else {
                     caps.get(0).unwrap().as_str().to_owned()
                 }
@@ -62,12 +62,10 @@ fn render_citation(reference: &Entry, no_author: bool) -> String {
 
     if no_author {
         date
+    } else if let Some(authors) = reference.author() {
+        format!("{} {}", authors[0].name, date)
     } else {
-        if let Some(authors) = reference.author() {
-            format!("{} {}", authors[0].name, date)
-        } else {
-            format!("Anonymous {}", date)
-        }
+        format!("Anonymous {}", date)
     }
 }
 

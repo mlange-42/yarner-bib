@@ -26,6 +26,8 @@ impl FromStr for CitationStyle {
 pub struct Config {
     pub bib_file: String,
     pub citation_style: CitationStyle,
+    pub refs_file: Option<String>,
+    pub placeholder: String,
 }
 
 impl TryFrom<&toml::Value> for Config {
@@ -43,6 +45,15 @@ impl TryFrom<&toml::Value> for Config {
                 .and_then(|s| s.as_str())
                 .map(|s| CitationStyle::from_str(s))
                 .unwrap_or(Ok(CitationStyle::AuthorYear))?,
+            refs_file: value
+                .get("refs-file")
+                .and_then(|s| s.as_str())
+                .map(|s| s.to_string()),
+            placeholder: value
+                .get("placeholder")
+                .and_then(|s| s.as_str())
+                .unwrap_or("[[_REFS_]]")
+                .to_owned(),
         })
     }
 }
