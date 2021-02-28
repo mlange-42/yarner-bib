@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use yarner_lib::{Document, Node, TextBlock};
 
-const REF_PATTERN: &str = r##"(-)?@([^\[\]\s\."#'(),={}%]+)"##;
+const REF_PATTERN: &str = r##"(-)?@([^\[\]\s\.,;"#'()={}%]+)"##;
 static REF_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(REF_PATTERN).unwrap());
 
 pub fn insert_references(
@@ -168,7 +168,7 @@ mod test {
         assert_eq!(citations.len(), 1);
         assert_eq!(
             &block.text[0],
-            "A test citation: [Klabnik 2018](#cite-ref-Klabnik2018)."
+            "A test citation: [Klabnik & Nichols 2018](#cite-ref-Klabnik2018)."
         )
     }
 

@@ -8,10 +8,14 @@ pub fn format_citation(reference: &Entry, link_prefix: Option<&String>, no_autho
 
     if no_author {
         format!("[{}]({}#{})", date, prefix, anchor)
-    } else if let Some(authors) = reference.author() {
-        format!("[{} {}]({}#{})", authors[0].name, date, prefix, anchor)
     } else {
-        format!("[Anonymous {}]({}#{})", date, prefix, anchor)
+        format!(
+            "[{} {}]({}#{})",
+            format_authors_citation(reference.author()),
+            date,
+            prefix,
+            anchor
+        )
     }
 }
 
@@ -78,6 +82,20 @@ fn format_authors(authors: Option<Vec<Person>>) -> String {
     result
 }
 
+fn format_authors_citation(authors: Option<Vec<Person>>) -> String {
+    let mut result = String::new();
+    if let Some(authors) = authors {
+        match authors.len() {
+            1 => write!(result, "{}", authors[0].name).unwrap(),
+            2 => write!(result, "{} & {}", authors[0].name, authors[1].name).unwrap(),
+            _ => write!(result, "{} et al.", authors[0].name).unwrap(),
+        }
+    } else {
+        write!(result, "Anonymous").unwrap();
+    }
+    result
+}
+
 fn format_date(date: Option<Date>) -> String {
     if let Some(date) = date {
         if let DateValue::At(time) = date.value {
@@ -110,7 +128,7 @@ mod test {
 
         assert_eq!(
             super::format_citation(bib.get("Klabnik2018").unwrap(), None, false),
-            "[Klabnik 2018](#cite-ref-Klabnik2018)"
+            "[Klabnik & Nichols 2018](#cite-ref-Klabnik2018)"
         );
 
         assert_eq!(
