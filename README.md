@@ -1,6 +1,6 @@
 # yarner-bib
 
-A [Yarner](https://github.com/mlange-42/yarner) pre-processor ...
+A [Yarner](https://github.com/mlange-42/yarner) plugin ...
 
 ## Installation
 
@@ -18,8 +18,8 @@ A [Yarner](https://github.com/mlange-42/yarner) pre-processor ...
 
 ## Usage
 
-Add a section `preprocessor.bib` to your `Yarner.toml`:
+Add a section `plugin.bib` to your `Yarner.toml`:
 
 ```toml
-[preprocessor.bib]
+[plugin.bib]
 ```
