@@ -12,4 +12,7 @@ codegen-units = 1
 
 [dependencies]
 biblatex = "0.4.1"
+regex = "1.4"
+once_cell = "1.5"
+linked_hash_set = "0.1.4"
 yarner-lib = { git = "https://github.com/mlange-42/yarner.git", tag = "0.5.0" }

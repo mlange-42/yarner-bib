@@ -1,6 +1,7 @@
-use biblatex::Bibliography;
+mod bib;
+mod render;
+
 use std::error::Error;
-use std::path::Path;
 use yarner_lib::Context;
 
 fn main() {
@@ -14,7 +15,7 @@ fn main() {
 }
 
 fn run() -> Result<(), Box<dyn Error>> {
-    let data = yarner_lib::parse_input()?;
+    let mut data = yarner_lib::parse_input()?;
     let config = &data.context.config;
 
     check_version(&data.context);
@@ -24,7 +25,9 @@ fn run() -> Result<(), Box<dyn Error>> {
         .and_then(|s| s.as_str())
         .unwrap_or("bibliography.bib");
 
-    let _bibliography = load_bibliography(bib_file)?;
+    let bibliography = bib::load_bibliography(bib_file)?;
+
+    let _citations = render::render_citations(&mut data.documents, &bibliography);
 
     yarner_lib::write_output(&data)?;
     Ok(())
@@ -40,15 +43,4 @@ fn check_version(context: &Context) {
             context.yarner_version
         )
     }
-}
-
-fn load_bibliography<P: AsRef<Path>>(file: P) -> Result<Bibliography, Box<dyn Error>> {
-    Bibliography::parse(&std::fs::read_to_string(&file).map_err(|err| {
-        format!(
-            "Can't read bibliography from file {} - {}",
-            file.as_ref().display(),
-            err.to_string()
-        )
-    })?)
-    .ok_or_else(|| format!("No valid bibliography in file {}", file.as_ref().display()).into())
 }
