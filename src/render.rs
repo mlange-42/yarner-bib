@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use yarner_lib::{Document, Node, TextBlock};
 
-const REF_PATTERN: &str = r##"(-)?@([^\[\]\s\."#'(),={}%]+)"##;
+const REF_PATTERN: &str = r##"(-)?@([^\[\]\s\.,;"#'()={}%]+)"##;
 static REF_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(REF_PATTERN).unwrap());
 
 pub fn insert_references(
@@ -24,7 +24,7 @@ pub fn insert_references(
         if let Node::Text(block) = node {
             for line_idx in 0..block.text.len() {
                 if block.text[line_idx].contains(&config.placeholder) {
-                    let refs = render_references(&citations, &bibliography);
+                    let refs = render_references(&citations, &bibliography, &config);
                     block.text = block
                         .text
                         .iter()
@@ -51,12 +51,13 @@ pub fn insert_references(
 fn render_references(
     citations: &LinkedHashSet<String>,
     bibliography: &Bibliography,
+    config: &Config,
 ) -> Vec<String> {
     let mut text = vec![];
 
     for key in citations {
         if let Some(item) = bibliography.get(&key) {
-            text.push(format::format_reference(item));
+            text.push(format::format_reference(item, config.render_key));
             text.push("".to_string());
         }
     }
@@ -167,7 +168,7 @@ mod test {
         assert_eq!(citations.len(), 1);
         assert_eq!(
             &block.text[0],
-            "A test citation: [Klabnik 2018](#cite-ref-Klabnik2018)."
+            "A test citation: [Klabnik & Nichols 2018](#cite-ref-Klabnik2018)."
         )
     }
 
