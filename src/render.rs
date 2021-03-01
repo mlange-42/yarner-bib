@@ -168,7 +168,12 @@ fn render_citations_block(
                     };
                     format::format_citation(reference, ref_index + 1, style, link_prefix, no_author)
                 } else {
-                    caps.get(0).unwrap().as_str().to_owned()
+                    let original = caps.get(0).unwrap().as_str().to_owned();
+                    eprintln!(
+                        "  Warning: citation key '{}' not found in bibliography.",
+                        original
+                    );
+                    original
                 }
             });
 
