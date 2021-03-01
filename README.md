@@ -1,5 +1,7 @@
 # yarner-bib
 
+[![Build Status](https://travis-ci.com/mlange-42/yarner-bib.svg?branch=main)](https://travis-ci.com/mlange-42/yarner-bib)
+
 A [Yarner](https://github.com/mlange-42/yarner) plugin for citations using a BibTeX bibliography.
 
 Example:
@@ -55,18 +57,6 @@ Add a section `plugin.bib` to your `Yarner.toml`:
 ...
 ```
 
-The plugin allows for different options, which are all optional:
-
-```toml
-[plugin.bib]
-bibliography = "bibliography.bib"
-style = "author-year"
-refs-file = "References.md"
-placeholder = "[[_REFS_]]"
-link-refs = true
-render-key = true
-```
-
 Cite using the BibTeX citation key, prefixed with `@`:
 
 ```markdown
@@ -80,3 +70,26 @@ To generate the reference list, place the placeholder in each file, or in the fi
 
 [[_REFS_]]
 ```
+
+## Options
+
+The plugin allows for different options, which are all optional:
+
+```toml
+[plugin.bib]
+bibliography = "bibliography.bib"
+style = "author-year"
+refs-file = "References.md"
+placeholder = "[[_REFS_]]"
+link-refs = true
+render-key = true
+```
+
+| Option         | Details                                                                 | Default              |
+|----------------|-------------------------------------------------------------------------|----------------------|
+| `bibliography` | The BibTeX file to use.                                                 | `bibliography.bib`   |
+| `style`        | The citation style. Either `author-year` or `numbered`.                 | `author-year`        |
+| `refs-file`    | The Markdown file for references. References in each file if not given. | none                 |
+| `placeholder`  | The placeholder to replace by the list of references                    | `[[_REFS_]]`         |
+| `link-refs`    | Add links from citations to references.                                 | `true`               |
+| `render-key`   | Render the citation key in front of each reference.                     | `true`               |
