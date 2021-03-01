@@ -63,6 +63,7 @@ bibliography = "bibliography.bib"
 style = "author-year"
 refs-file = "References.md"
 placeholder = "[[_REFS_]]"
+link-refs = true
 render-key = true
 ```
 

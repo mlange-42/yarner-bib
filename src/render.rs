@@ -73,12 +73,7 @@ fn render_references(
     };
 
     for (item, idx) in bib.iter() {
-        text.push(format::format_reference(
-            item,
-            &config.citation_style,
-            config.render_key,
-            *idx + 1,
-        ));
+        text.push(format::format_reference(item, *idx + 1, &config));
         text.push("".to_string());
     }
     text.pop();
@@ -95,13 +90,7 @@ pub fn render_citations(
 
     for mut node in document.nodes.iter_mut() {
         if let Node::Text(block) = &mut node {
-            render_citations_block(
-                block,
-                bibliography,
-                &config.citation_style,
-                None,
-                &mut citations,
-            );
+            render_citations_block(block, bibliography, None, config, &mut citations);
         }
     }
 
@@ -127,8 +116,8 @@ pub fn render_citations_all(
                 render_citations_block(
                     block,
                     bibliography,
-                    &config.citation_style,
                     rel_link.as_ref(),
+                    config,
                     &mut citations,
                 );
             }
@@ -151,8 +140,8 @@ where
 fn render_citations_block(
     block: &mut TextBlock,
     bibliography: &Bibliography,
-    style: &CitationStyle,
     link_prefix: Option<&String>,
+    config: &Config,
     citations: &mut LinkedHashMap<String, usize>,
 ) {
     for line in block.text.iter_mut() {
@@ -166,7 +155,13 @@ fn render_citations_block(
                         Entry::Occupied(entry) => *entry.get(),
                         Entry::Vacant(entry) => *entry.insert(index),
                     };
-                    format::format_citation(reference, ref_index + 1, style, link_prefix, no_author)
+                    format::format_citation(
+                        reference,
+                        ref_index + 1,
+                        link_prefix,
+                        no_author,
+                        config,
+                    )
                 } else {
                     let original = caps.get(0).unwrap().as_str().to_owned();
                     eprintln!(

@@ -1,52 +1,66 @@
-use crate::config::CitationStyle;
+use crate::config::{CitationStyle, Config};
 use biblatex::{ChunksExt, Date, DateValue, Entry, Person};
 use std::fmt::Write;
 
 pub fn format_citation(
     reference: &Entry,
     index: usize,
-    style: &CitationStyle,
     link_prefix: Option<&String>,
     no_author: bool,
+    config: &Config,
 ) -> String {
     let anchor = format_ref_anchor(&reference.key);
     let prefix = link_prefix.cloned().unwrap_or_default();
 
-    match style {
-        CitationStyle::Index => {
-            format!("[{}]({}#{})", index, prefix, anchor)
+    if config.link_refs {
+        match &config.citation_style {
+            CitationStyle::Index => {
+                format!("[{}]({}#{})", index, prefix, anchor)
+            }
+            CitationStyle::AuthorYear => {
+                let date = format_date(reference.date());
+                if no_author {
+                    format!("[{}]({}#{})", date, prefix, anchor)
+                } else {
+                    format!(
+                        "[{} {}]({}#{})",
+                        format_authors_citation(reference.author()),
+                        date,
+                        prefix,
+                        anchor
+                    )
+                }
+            }
         }
-        CitationStyle::AuthorYear => {
-            let date = format_date(reference.date());
-            if no_author {
-                format!("[{}]({}#{})", date, prefix, anchor)
-            } else {
-                format!(
-                    "[{} {}]({}#{})",
-                    format_authors_citation(reference.author()),
-                    date,
-                    prefix,
-                    anchor
-                )
+    } else {
+        match &config.citation_style {
+            CitationStyle::Index => {
+                format!("{}", index)
+            }
+            CitationStyle::AuthorYear => {
+                let date = format_date(reference.date());
+                if no_author {
+                    format!("{}", date)
+                } else {
+                    format!("{} {}", format_authors_citation(reference.author()), date,)
+                }
             }
         }
     }
 }
 
-pub fn format_reference(
-    item: &Entry,
-    style: &CitationStyle,
-    render_key: bool,
-    index: usize,
-) -> String {
+pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
     let mut result = String::new();
     let anchor = format_ref_anchor(&item.key);
-    write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
 
-    if style == &CitationStyle::Index {
+    if config.link_refs {
+        write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
+    }
+
+    if &config.citation_style == &CitationStyle::Index {
         write!(result, "[{}] ", index).unwrap();
     }
-    if render_key {
+    if config.render_key {
         write!(result, "[{}] ", item.key).unwrap();
     }
 
