@@ -92,7 +92,10 @@ fn format_authors(authors: Option<Vec<Person>>) -> String {
         for (idx, author) in authors.iter().enumerate() {
             write!(result, "{}", author.name).unwrap();
             if !author.given_name.is_empty() {
-                write!(result, " {}", &author.given_name[..1]).unwrap();
+                write!(result, " ").unwrap();
+                for part in author.given_name.split(' ') {
+                    write!(result, "{}", &part[..1]).unwrap();
+                }
             }
             if idx < authors.len() - 1 {
                 write!(result, ", ").unwrap();
