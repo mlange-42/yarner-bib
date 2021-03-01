@@ -37,7 +37,8 @@ fn run() -> Result<(), Box<dyn Error>> {
             .into());
         }
 
-        let citations = render::render_citations_all(&mut data.documents, &bibliography, &path);
+        let citations =
+            render::render_citations_all(&mut data.documents, &bibliography, &config, &path);
 
         render::insert_references(
             &path,
@@ -48,7 +49,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         );
     } else {
         for (path, mut doc) in data.documents.iter_mut() {
-            let citations = render::render_citations(&mut doc, &bibliography);
+            let citations = render::render_citations(&mut doc, &bibliography, &config);
             render::insert_references(path, &mut doc, &citations, &bibliography, &config);
         }
     }

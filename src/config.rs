@@ -2,6 +2,7 @@ use std::convert::TryFrom;
 use std::error::Error;
 use std::str::FromStr;
 
+#[derive(PartialEq)]
 pub enum CitationStyle {
     Index,
     AuthorYear,
@@ -12,10 +13,10 @@ impl FromStr for CitationStyle {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "index" => Ok(CitationStyle::Index),
+            "numbered" => Ok(CitationStyle::Index),
             "author-year" => Ok(CitationStyle::AuthorYear),
             other => Err(format!(
-                "Unknown citation style '{}'. Use 'index' or 'author-year'",
+                "Unknown citation style '{}'. Use 'numbered' or 'author-year'",
                 other
             )
             .into()),
