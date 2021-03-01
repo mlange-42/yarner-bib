@@ -40,7 +40,7 @@ pub fn format_citation(
             CitationStyle::AuthorYear => {
                 let date = format_date(reference.date());
                 if no_author {
-                    format!("{}", date)
+                    date
                 } else {
                     format!("{} {}", format_authors_citation(reference.author()), date,)
                 }
@@ -57,7 +57,7 @@ pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
         write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
     }
 
-    if &config.citation_style == &CitationStyle::Index {
+    if config.citation_style == CitationStyle::Index {
         write!(result, "[{}] ", index).unwrap();
     }
     if config.render_key {
@@ -150,7 +150,7 @@ pub fn format_date(date: Option<Date>) -> String {
 #[cfg(test)]
 mod test {
     use crate::bib::parse_bibliography;
-    use crate::config::CitationStyle;
+    use crate::config::{CitationStyle, Config};
 
     const TEST_BIB: &str = r#"
 @book{Klabnik2018,
@@ -164,27 +164,24 @@ mod test {
 
     #[test]
     fn format_citation() {
+        let config = Config {
+            bib_file: "".to_string(),
+            citation_style: CitationStyle::AuthorYear,
+            refs_file: None,
+            placeholder: "[[_REFS_]]".to_string(),
+            render_key: true,
+            link_refs: true,
+        };
+
         let bib = parse_bibliography(TEST_BIB).unwrap();
 
         assert_eq!(
-            super::format_citation(
-                bib.get("Klabnik2018").unwrap(),
-                1,
-                &CitationStyle::AuthorYear,
-                None,
-                false
-            ),
+            super::format_citation(bib.get("Klabnik2018").unwrap(), 1, None, false, &config),
             "[Klabnik & Nichols 2018](#cite-ref-Klabnik2018)"
         );
 
         assert_eq!(
-            super::format_citation(
-                bib.get("Klabnik2018").unwrap(),
-                1,
-                &CitationStyle::AuthorYear,
-                None,
-                true
-            ),
+            super::format_citation(bib.get("Klabnik2018").unwrap(), 1, None, true, &config),
             "[2018](#cite-ref-Klabnik2018)"
         );
     }

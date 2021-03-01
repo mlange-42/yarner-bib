@@ -180,7 +180,7 @@ fn render_citations_block(
 #[cfg(test)]
 mod test {
     use crate::bib::parse_bibliography;
-    use crate::config::CitationStyle;
+    use crate::config::{CitationStyle, Config};
     use linked_hash_map::LinkedHashMap;
     use yarner_lib::TextBlock;
 
@@ -196,6 +196,15 @@ mod test {
 
     #[test]
     fn render_citations_block() {
+        let config = Config {
+            bib_file: "".to_string(),
+            citation_style: CitationStyle::AuthorYear,
+            refs_file: None,
+            placeholder: "[[_REFS_]]".to_string(),
+            render_key: true,
+            link_refs: true,
+        };
+
         let bib = parse_bibliography(TEST_BIB).unwrap();
         let mut citations = LinkedHashMap::new();
 
@@ -203,13 +212,7 @@ mod test {
             text: vec!["A test citation: @Klabnik2018.".to_string()],
         };
 
-        super::render_citations_block(
-            &mut block,
-            &bib,
-            &CitationStyle::AuthorYear,
-            None,
-            &mut citations,
-        );
+        super::render_citations_block(&mut block, &bib, None, &config, &mut citations);
 
         assert_eq!(citations.len(), 1);
         assert_eq!(
@@ -220,6 +223,15 @@ mod test {
 
     #[test]
     fn render_citations_block_no_author() {
+        let config = Config {
+            bib_file: "".to_string(),
+            citation_style: CitationStyle::AuthorYear,
+            refs_file: None,
+            placeholder: "[[_REFS_]]".to_string(),
+            render_key: true,
+            link_refs: true,
+        };
+
         let bib = parse_bibliography(TEST_BIB).unwrap();
         let mut citations = LinkedHashMap::new();
 
@@ -227,13 +239,7 @@ mod test {
             text: vec!["A test citation: -@Klabnik2018.".to_string()],
         };
 
-        super::render_citations_block(
-            &mut block,
-            &bib,
-            &CitationStyle::AuthorYear,
-            None,
-            &mut citations,
-        );
+        super::render_citations_block(&mut block, &bib, None, &config, &mut citations);
 
         assert_eq!(citations.len(), 1);
         assert_eq!(
