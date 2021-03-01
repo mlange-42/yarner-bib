@@ -55,11 +55,15 @@ fn render_references(
 ) -> Vec<String> {
     let mut text = vec![];
 
-    for key in citations {
-        if let Some(item) = bibliography.get(&key) {
-            text.push(format::format_reference(item, config.render_key));
-            text.push("".to_string());
-        }
+    let mut bib: Vec<_> = bibliography
+        .iter()
+        .filter(|entry| citations.contains(&entry.key))
+        .collect();
+    bib.sort_by_cached_key(|entry| (entry.author(), format::format_date(entry.date())));
+
+    for item in bib {
+        text.push(format::format_reference(item, config.render_key));
+        text.push("".to_string());
     }
     text.pop();
 

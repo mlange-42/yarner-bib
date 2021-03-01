@@ -96,7 +96,7 @@ fn format_authors_citation(authors: Option<Vec<Person>>) -> String {
     result
 }
 
-fn format_date(date: Option<Date>) -> String {
+pub fn format_date(date: Option<Date>) -> String {
     if let Some(date) = date {
         if let DateValue::At(time) = date.value {
             format!("{}", time.year)
