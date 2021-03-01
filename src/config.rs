@@ -30,6 +30,7 @@ pub struct Config {
     pub refs_file: Option<String>,
     pub placeholder: String,
     pub render_key: bool,
+    pub link_refs: bool,
 }
 
 impl TryFrom<&toml::Value> for Config {
@@ -58,6 +59,10 @@ impl TryFrom<&toml::Value> for Config {
                 .to_owned(),
             render_key: value
                 .get("render-key")
+                .and_then(|s| s.as_bool())
+                .unwrap_or(true),
+            link_refs: value
+                .get("link-refs")
                 .and_then(|s| s.as_bool())
                 .unwrap_or(true),
         })
