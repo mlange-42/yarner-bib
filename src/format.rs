@@ -1,31 +1,53 @@
+use crate::config::CitationStyle;
 use biblatex::{ChunksExt, Date, DateValue, Entry, Person};
 use std::fmt::Write;
 
-pub fn format_citation(reference: &Entry, link_prefix: Option<&String>, no_author: bool) -> String {
-    let date = format_date(reference.date());
+pub fn format_citation(
+    reference: &Entry,
+    index: usize,
+    style: &CitationStyle,
+    link_prefix: Option<&String>,
+    no_author: bool,
+) -> String {
     let anchor = format_ref_anchor(&reference.key);
     let prefix = link_prefix.cloned().unwrap_or_default();
 
-    if no_author {
-        format!("[{}]({}#{})", date, prefix, anchor)
-    } else {
-        format!(
-            "[{} {}]({}#{})",
-            format_authors_citation(reference.author()),
-            date,
-            prefix,
-            anchor
-        )
+    match style {
+        CitationStyle::Index => {
+            format!("[{}]({}#{})", index, prefix, anchor)
+        }
+        CitationStyle::AuthorYear => {
+            let date = format_date(reference.date());
+            if no_author {
+                format!("[{}]({}#{})", date, prefix, anchor)
+            } else {
+                format!(
+                    "[{} {}]({}#{})",
+                    format_authors_citation(reference.author()),
+                    date,
+                    prefix,
+                    anchor
+                )
+            }
+        }
     }
 }
 
-pub fn format_reference(item: &Entry, render_key: bool) -> String {
+pub fn format_reference(
+    item: &Entry,
+    style: &CitationStyle,
+    render_key: bool,
+    index: usize,
+) -> String {
     let mut result = String::new();
     let anchor = format_ref_anchor(&item.key);
     write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
 
+    if style == &CitationStyle::Index {
+        write!(result, "[{}] ", index).unwrap();
+    }
     if render_key {
-        write!(result, "[{}] ", item.key,).unwrap();
+        write!(result, "[{}] ", item.key).unwrap();
     }
 
     write!(
@@ -111,6 +133,7 @@ pub fn format_date(date: Option<Date>) -> String {
 #[cfg(test)]
 mod test {
     use crate::bib::parse_bibliography;
+    use crate::config::CitationStyle;
 
     const TEST_BIB: &str = r#"
 @book{Klabnik2018,
@@ -127,12 +150,24 @@ mod test {
         let bib = parse_bibliography(TEST_BIB).unwrap();
 
         assert_eq!(
-            super::format_citation(bib.get("Klabnik2018").unwrap(), None, false),
+            super::format_citation(
+                bib.get("Klabnik2018").unwrap(),
+                1,
+                &CitationStyle::AuthorYear,
+                None,
+                false
+            ),
             "[Klabnik & Nichols 2018](#cite-ref-Klabnik2018)"
         );
 
         assert_eq!(
-            super::format_citation(bib.get("Klabnik2018").unwrap(), None, true),
+            super::format_citation(
+                bib.get("Klabnik2018").unwrap(),
+                1,
+                &CitationStyle::AuthorYear,
+                None,
+                true
+            ),
             "[2018](#cite-ref-Klabnik2018)"
         );
     }

@@ -1,7 +1,7 @@
-use crate::config::Config;
+use crate::config::{CitationStyle, Config};
 use crate::format;
 use biblatex::Bibliography;
-use linked_hash_set::LinkedHashSet;
+use linked_hash_map::{Entry, LinkedHashMap};
 use once_cell::sync::Lazy;
 use regex::{Captures, Regex};
 use std::collections::HashMap;
@@ -14,7 +14,7 @@ static REF_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(REF_PATTERN).unwrap());
 pub fn insert_references(
     path: &PathBuf,
     document: &mut Document,
-    citations: &LinkedHashSet<String>,
+    citations: &LinkedHashMap<String, usize>,
     bibliography: &Bibliography,
     config: &Config,
 ) {
@@ -49,20 +49,36 @@ pub fn insert_references(
 }
 
 fn render_references(
-    citations: &LinkedHashSet<String>,
+    citations: &LinkedHashMap<String, usize>,
     bibliography: &Bibliography,
     config: &Config,
 ) -> Vec<String> {
     let mut text = vec![];
 
-    let mut bib: Vec<_> = bibliography
-        .iter()
-        .filter(|entry| citations.contains(&entry.key))
-        .collect();
-    bib.sort_by_cached_key(|entry| (entry.author(), format::format_date(entry.date())));
+    let bib: Vec<_> = match config.citation_style {
+        CitationStyle::Index => citations
+            .iter()
+            .filter_map(|(key, idx)| bibliography.get(key).map(|e| (e, idx)))
+            .collect(),
+        CitationStyle::AuthorYear => {
+            let mut bib: Vec<_> = bibliography
+                .iter()
+                .filter_map(|entry| citations.get(&entry.key).map(|idx| (entry, idx)))
+                .collect();
+            bib.sort_by_cached_key(|(entry, _idx)| {
+                (entry.author(), format::format_date(entry.date()))
+            });
+            bib
+        }
+    };
 
-    for item in bib {
-        text.push(format::format_reference(item, config.render_key));
+    for (item, idx) in bib.iter() {
+        text.push(format::format_reference(
+            item,
+            &config.citation_style,
+            config.render_key,
+            *idx + 1,
+        ));
         text.push("".to_string());
     }
     text.pop();
@@ -73,12 +89,19 @@ fn render_references(
 pub fn render_citations(
     document: &mut Document,
     bibliography: &Bibliography,
-) -> LinkedHashSet<String> {
-    let mut citations = LinkedHashSet::new();
+    config: &Config,
+) -> LinkedHashMap<String, usize> {
+    let mut citations = LinkedHashMap::new();
 
     for mut node in document.nodes.iter_mut() {
         if let Node::Text(block) = &mut node {
-            render_citations_block(block, bibliography, None, &mut citations);
+            render_citations_block(
+                block,
+                bibliography,
+                &config.citation_style,
+                None,
+                &mut citations,
+            );
         }
     }
 
@@ -88,9 +111,10 @@ pub fn render_citations(
 pub fn render_citations_all(
     documents: &mut HashMap<PathBuf, Document>,
     bibliography: &Bibliography,
+    config: &Config,
     refs_file: &PathBuf,
-) -> LinkedHashSet<String> {
-    let mut citations = LinkedHashSet::new();
+) -> LinkedHashMap<String, usize> {
+    let mut citations = LinkedHashMap::new();
 
     for (path, doc) in documents.iter_mut() {
         let rel_link = if path == refs_file {
@@ -100,7 +124,13 @@ pub fn render_citations_all(
         };
         for mut node in doc.nodes.iter_mut() {
             if let Node::Text(block) = &mut node {
-                render_citations_block(block, bibliography, rel_link.as_ref(), &mut citations);
+                render_citations_block(
+                    block,
+                    bibliography,
+                    &config.citation_style,
+                    rel_link.as_ref(),
+                    &mut citations,
+                );
             }
         }
     }
@@ -121,8 +151,9 @@ where
 fn render_citations_block(
     block: &mut TextBlock,
     bibliography: &Bibliography,
+    style: &CitationStyle,
     link_prefix: Option<&String>,
-    citations: &mut LinkedHashSet<String>,
+    citations: &mut LinkedHashMap<String, usize>,
 ) {
     for line in block.text.iter_mut() {
         if REF_REGEX.is_match(&line) {
@@ -130,8 +161,12 @@ fn render_citations_block(
                 let no_author = caps.get(1).is_some();
                 let key = &caps[2];
                 if let Some(reference) = bibliography.get(key) {
-                    citations.insert(key.to_owned());
-                    format::format_citation(reference, link_prefix, no_author)
+                    let index = citations.len();
+                    let ref_index = match citations.entry(key.to_owned()) {
+                        Entry::Occupied(entry) => *entry.get(),
+                        Entry::Vacant(entry) => *entry.insert(index),
+                    };
+                    format::format_citation(reference, ref_index + 1, style, link_prefix, no_author)
                 } else {
                     caps.get(0).unwrap().as_str().to_owned()
                 }
@@ -145,7 +180,8 @@ fn render_citations_block(
 #[cfg(test)]
 mod test {
     use crate::bib::parse_bibliography;
-    use linked_hash_set::LinkedHashSet;
+    use crate::config::CitationStyle;
+    use linked_hash_map::LinkedHashMap;
     use yarner_lib::TextBlock;
 
     const TEST_BIB: &str = r#"
@@ -161,13 +197,19 @@ mod test {
     #[test]
     fn render_citations_block() {
         let bib = parse_bibliography(TEST_BIB).unwrap();
-        let mut citations = LinkedHashSet::new();
+        let mut citations = LinkedHashMap::new();
 
         let mut block = TextBlock {
             text: vec!["A test citation: @Klabnik2018.".to_string()],
         };
 
-        super::render_citations_block(&mut block, &bib, None, &mut citations);
+        super::render_citations_block(
+            &mut block,
+            &bib,
+            &CitationStyle::AuthorYear,
+            None,
+            &mut citations,
+        );
 
         assert_eq!(citations.len(), 1);
         assert_eq!(
@@ -179,13 +221,19 @@ mod test {
     #[test]
     fn render_citations_block_no_author() {
         let bib = parse_bibliography(TEST_BIB).unwrap();
-        let mut citations = LinkedHashSet::new();
+        let mut citations = LinkedHashMap::new();
 
         let mut block = TextBlock {
             text: vec!["A test citation: -@Klabnik2018.".to_string()],
         };
 
-        super::render_citations_block(&mut block, &bib, None, &mut citations);
+        super::render_citations_block(
+            &mut block,
+            &bib,
+            &CitationStyle::AuthorYear,
+            None,
+            &mut citations,
+        );
 
         assert_eq!(citations.len(), 1);
         assert_eq!(
