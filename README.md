@@ -2,6 +2,36 @@
 
 A [Yarner](https://github.com/mlange-42/yarner) plugin for citations using a BibTeX bibliography.
 
+Example:
+
+Here is a Markdown source with citations and a placeholder for the references:
+
+```markdown
+## Yarner-bib example
+
+Yarner is a command line tool for Literate Programming (@Knuth1984).
+Another famous Literate Programming environment is RMarkdown (@Baumer2015).
+
+## References
+
+[[_REFS_]]
+```
+
+After processing with Yarner and yarner-bib, it produces this output:
+
+<table><tr><td>
+
+## Yarner-bib example
+
+Yarner is a command line tool for Literate Programming ([Knuth 1984](#cite-ref-Knuth1984)). Another famous Literate Programming environment is RMarkdown ([Baumer & Udwin 2015](#cite-ref-Baumer2015)).
+
+## References
+
+<a name="cite-ref-Baumer2015" id="cite-ref-Baumer2015"></a>Baumer B, Udwin D (2015): **R Markdown**. *WIREs Computational Statistics* 7:3, 167-177.
+
+<a name="cite-ref-Knuth1984" id="cite-ref-Knuth1984"></a>Knuth DE (1984): **Literate Programming**. *The Computer Journal* 27:2, 97-111.
+</td></tr></table>
+
 ## Installation
 
 **Binaries**
