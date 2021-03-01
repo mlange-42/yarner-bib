@@ -40,7 +40,7 @@ pub fn insert_references(
         }
     }
 
-    if !pattern_found {
+    if !pattern_found && !citations.is_empty() {
         eprintln!(
             "  Warning: no placeholder for references found in {}",
             path.display()
