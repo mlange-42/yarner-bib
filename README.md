@@ -1,6 +1,7 @@
 # yarner-bib
 
-[![Tests](https://github.com/mlange-42/yarner-bib/actions/workflows/tests.yml/badge.svg)](https://github.com/mlange-42/yarner-bib/actions/workflows/tests.yml)
+[![Test status](https://github.com/mlange-42/yarner-bib/actions/workflows/tests.yml/badge.svg)](https://github.com/mlange-42/yarner-bib/actions/workflows/tests.yml)
+[![Crate](https://img.shields.io/crates/v/yarner-bib.svg)](https://crates.io/crates/yarner-bib)
 
 A [Yarner](https://github.com/mlange-42/yarner) plugin for citations using a BibTeX bibliography.
 
