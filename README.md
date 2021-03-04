@@ -45,7 +45,7 @@ Yarner is a command line tool for Literate Programming ([Knuth 1984](#cite-ref-K
 **Using `cargo`**
 
 ```
-> cargo install --git https://github.com/mlange-42/yarner-bib.git --branch main
+> cargo install yarner-bib
 ```
 
 ## Usage

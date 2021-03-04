@@ -1,7 +1,12 @@
 [package]
 name = "yarner-bib"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Martin Lange <martin_lange_@gmx.net>"]
+readme = "README.md"
+description = "A Yarner plugin for citations using a BibTeX bibliograph"
+homepage = "https://github.com/mlange-42/yarner-bib/"
+repository = "https://github.com/mlange-42/yarner-bib/"
+license = "MIT"
 edition = "2018"
 
 [profile.release]
@@ -18,4 +23,4 @@ linked-hash-map = "0.5.4"
 toml = "0.5"
 path-clean = "0.1"
 pathdiff = "0.2"
-yarner-lib = { git = "https://github.com/mlange-42/yarner.git", tag = "0.5.1" }
+yarner-lib = "0.5.1"
