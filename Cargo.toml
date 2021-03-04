@@ -1,6 +1,6 @@
 [package]
 name = "yarner-bib"
-version = "0.2.0"
+version = "0.1.1"
 authors = ["Martin Lange <martin_lange_@gmx.net>"]
 readme = "README.md"
 description = "A Yarner plugin for citations using a BibTeX bibliograph"
