@@ -8,6 +8,7 @@ homepage = "https://github.com/mlange-42/yarner-bib/"
 repository = "https://github.com/mlange-42/yarner-bib/"
 license = "MIT"
 edition = "2018"
+exclude = [".github"]
 
 [profile.release]
 panic = "abort"
