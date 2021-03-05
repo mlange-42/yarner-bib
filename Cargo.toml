@@ -4,6 +4,7 @@ version = "0.1.1"
 authors = ["Martin Lange <martin_lange_@gmx.net>"]
 readme = "README.md"
 description = "A Yarner plugin for citations using a BibTeX bibliograph"
+keywords = ["markdown", "literate-programming", "bibliography", "bibtex", "plugin"]
 homepage = "https://github.com/mlange-42/yarner-bib/"
 repository = "https://github.com/mlange-42/yarner-bib/"
 license = "MIT"

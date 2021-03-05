@@ -1,7 +1,9 @@
 # yarner-bib
 
 [![Test status](https://github.com/mlange-42/yarner-bib/actions/workflows/tests.yml/badge.svg)](https://github.com/mlange-42/yarner-bib/actions/workflows/tests.yml)
+[![GitHub](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/mlange-42/yarner-bib)
 [![Crate](https://img.shields.io/crates/v/yarner-bib.svg)](https://crates.io/crates/yarner-bib)
+[![MIT license](https://img.shields.io/github/license/mlange-42/yarner-bib)](https://github.com/mlange-42/yarner-bib/blob/main/LICENSE)
 
 A [Yarner](https://github.com/mlange-42/yarner) plugin for citations using a BibTeX bibliography.
 
