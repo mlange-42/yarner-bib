@@ -1,6 +1,34 @@
+mod article;
+
 use crate::config::{CitationStyle, Config};
-use biblatex::{ChunksExt, Date, DateValue, Entry, Person};
+use biblatex::{Chunk, ChunksExt, Date, DateValue, Entry, EntryType, Person};
+use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::fmt::Write;
+use std::ops::Range;
+
+static FORMATTERS: Lazy<HashMap<String, Box<dyn EntryFormatter>>> = Lazy::new(|| {
+    let mut map: HashMap<String, Box<dyn EntryFormatter>> = HashMap::new();
+    map.insert(
+        EntryType::Article.to_string(),
+        Box::new(article::ArticleFormatter {}),
+    );
+
+    map
+});
+static DEFAULT_FORMATTER: Lazy<Box<dyn EntryFormatter>> =
+    Lazy::new(|| Box::new(article::ArticleFormatter {}));
+
+trait EntryFormatter: Send + Sync {
+    fn format(&self, item: &Entry, index: usize, config: &Config) -> String;
+}
+
+pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
+    let formatter = FORMATTERS
+        .get(&item.entry_type.to_string())
+        .unwrap_or(&DEFAULT_FORMATTER);
+    formatter.format(item, index, config)
+}
 
 pub fn format_citation(
     reference: &Entry,
@@ -9,7 +37,7 @@ pub fn format_citation(
     no_author: bool,
     config: &Config,
 ) -> String {
-    let anchor = format_ref_anchor(&reference.key);
+    let anchor = key_to_anchor(&reference.key);
     let prefix = link_prefix.cloned().unwrap_or_default();
 
     if config.link_refs {
@@ -49,55 +77,21 @@ pub fn format_citation(
     }
 }
 
-pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
-    let mut result = String::new();
-    let anchor = format_ref_anchor(&item.key);
-
-    if config.link_refs {
-        write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
-    }
-
-    if config.citation_style == CitationStyle::Index {
-        write!(result, "[{}] ", index).unwrap();
-    }
-    if config.render_key {
-        write!(result, "[{}] ", item.key).unwrap();
-    }
-
-    write!(
-        result,
-        "{} ({}): **{}**",
-        format_authors(item.author()),
-        format_date(item.date()),
-        item.title()
-            .map(|chunks| chunks.format_verbatim())
-            .unwrap_or_else(|| "Untitled".to_string()),
-    )
-    .unwrap();
-
-    if let Some(chunks) = item.journal() {
-        write!(result, ". *{}*", chunks.format_verbatim()).unwrap();
-    }
-
-    if let Some(volume) = item.volume() {
-        write!(result, " {}", volume).unwrap();
-
-        if let Some(number) = item.number() {
-            write!(result, ":{}", number.format_verbatim()).unwrap();
-        }
-    }
-
-    if let Some(ranges) = item.pages() {
-        write!(result, ", {}-{}", &ranges[0].start, &ranges[0].end).unwrap();
-    }
-
-    write!(result, ".").unwrap();
-
-    result
+fn format_anchor(key: &str) -> String {
+    let anchor = key_to_anchor(key);
+    format!("<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,)
 }
 
-fn format_ref_anchor(key: &str) -> String {
+fn key_to_anchor(key: &str) -> String {
     format!("cite-ref-{}", key)
+}
+
+fn format_pages(ranges: &[Range<u32>]) -> String {
+    if ranges.is_empty() {
+        "???".to_string()
+    } else {
+        format!("{}-{}", &ranges[0].start, &ranges[0].end)
+    }
 }
 
 fn format_authors(authors: Option<Vec<Person>>) -> String {
@@ -119,6 +113,12 @@ fn format_authors(authors: Option<Vec<Person>>) -> String {
         write!(result, "Anonymous").unwrap();
     }
     result
+}
+
+fn format_title(title: Option<&[Chunk]>) -> String {
+    title
+        .map(|chunks| chunks.format_verbatim())
+        .unwrap_or_else(|| "Untitled".to_string())
 }
 
 fn format_authors_citation(authors: Option<Vec<Person>>) -> String {
