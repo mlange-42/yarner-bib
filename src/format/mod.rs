@@ -1,6 +1,7 @@
 mod article;
 mod book;
 mod inbook;
+mod incollection;
 
 use crate::config::{CitationStyle, Config};
 use biblatex::{Chunk, ChunksExt, Date, DateValue, Entry, EntryType, Person};
@@ -15,8 +16,9 @@ fn get_formatter(tp: &EntryType) -> Box<dyn EntryFormatter> {
     match tp {
         EntryType::Article => Box::new(article::ArticleFormatter {}),
         EntryType::Book => Box::new(book::BookFormatter {}),
-        EntryType::InBook | EntryType::InCollection | EntryType::InProceedings => {
-            Box::new(inbook::InBookFormatter {})
+        EntryType::InBook => Box::new(inbook::InBookFormatter {}),
+        EntryType::InCollection | EntryType::InProceedings => {
+            Box::new(incollection::InCollectionFormatter {})
         }
         _ => Box::new(article::ArticleFormatter {}),
     }
