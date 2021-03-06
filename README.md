@@ -88,11 +88,11 @@ link-refs = true
 render-key = true
 ```
 
-| Option         | Details                                                                 | Default              |
-|----------------|-------------------------------------------------------------------------|----------------------|
-| `bibliography` | The BibTeX file to use.                                                 | `bibliography.bib`   |
-| `style`        | The citation style. Either `author-year` or `numbered`.                 | `author-year`        |
-| `refs-file`    | The Markdown file for references. References in each file if not given. | none                 |
-| `placeholder`  | The placeholder to replace by the list of references                    | `[[_REFS_]]`         |
-| `link-refs`    | Add links from citations to references.                                 | `true`               |
-| `render-key`   | Render the citation key in front of each reference.                     | `true`               |
+| Option         | Details                                                                         | Default              |
+|----------------|---------------------------------------------------------------------------------|----------------------|
+| `bibliography` | The BibTeX file to use.                                                         | `bibliography.bib`   |
+| `style`        | The citation style. Either `author-year` or `numbered`.                         | `author-year`        |
+| `refs-file`    | The Markdown file for central references. References in each file if not given. | none                 |
+| `placeholder`  | The placeholder to replace by the list of references                            | `[[_REFS_]]`         |
+| `link-refs`    | Add links from citations to references.                                         | `true`               |
+| `render-key`   | Render the citation key in front of each reference.                             | `true`               |
