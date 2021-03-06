@@ -4,49 +4,26 @@ mod inbook;
 
 use crate::config::{CitationStyle, Config};
 use biblatex::{Chunk, ChunksExt, Date, DateValue, Entry, EntryType, Person};
-use once_cell::sync::Lazy;
-use std::collections::HashMap;
 use std::fmt::Write;
 use std::ops::Range;
-
-static FORMATTERS: Lazy<HashMap<String, Box<dyn EntryFormatter>>> = Lazy::new(|| {
-    let mut map: HashMap<String, Box<dyn EntryFormatter>> = HashMap::new();
-    map.insert(
-        EntryType::Article.to_string(),
-        Box::new(article::ArticleFormatter {}),
-    );
-    map.insert(
-        EntryType::Book.to_string(),
-        Box::new(book::BookFormatter {}),
-    );
-
-    map.insert(
-        EntryType::InBook.to_string(),
-        Box::new(inbook::InBookFormatter {}),
-    );
-    map.insert(
-        EntryType::InCollection.to_string(),
-        Box::new(inbook::InBookFormatter {}),
-    );
-    map.insert(
-        EntryType::InProceedings.to_string(),
-        Box::new(inbook::InBookFormatter {}),
-    );
-
-    map
-});
-
-static DEFAULT_FORMATTER: Lazy<Box<dyn EntryFormatter>> =
-    Lazy::new(|| Box::new(article::ArticleFormatter {}));
 
 trait EntryFormatter: Send + Sync {
     fn format(&self, write: &mut dyn Write, item: &Entry);
 }
 
+fn get_formatter(tp: &EntryType) -> Box<dyn EntryFormatter> {
+    match tp {
+        EntryType::Article => Box::new(article::ArticleFormatter {}),
+        EntryType::Book => Box::new(book::BookFormatter {}),
+        EntryType::InBook | EntryType::InCollection | EntryType::InProceedings => {
+            Box::new(inbook::InBookFormatter {})
+        }
+        _ => Box::new(article::ArticleFormatter {}),
+    }
+}
+
 pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
-    let formatter = FORMATTERS
-        .get(&item.entry_type.to_string())
-        .unwrap_or(&DEFAULT_FORMATTER);
+    let formatter = get_formatter(&item.entry_type);
 
     let mut result = String::new();
     if config.link_refs {
