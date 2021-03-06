@@ -1,6 +1,47 @@
+mod article;
+mod book;
+mod inbook;
+mod incollection;
+
 use crate::config::{CitationStyle, Config};
-use biblatex::{ChunksExt, Date, DateValue, Entry, Person};
+use biblatex::{Chunk, ChunksExt, Date, DateValue, Entry, EntryType, Person};
 use std::fmt::Write;
+use std::ops::Range;
+
+trait EntryFormatter: Send + Sync {
+    fn format(&self, write: &mut dyn Write, item: &Entry);
+}
+
+fn get_formatter(tp: &EntryType) -> Box<dyn EntryFormatter> {
+    match tp {
+        EntryType::Article => Box::new(article::ArticleFormatter {}),
+        EntryType::Book => Box::new(book::BookFormatter {}),
+        EntryType::InBook => Box::new(inbook::InBookFormatter {}),
+        EntryType::InCollection | EntryType::InProceedings => {
+            Box::new(incollection::InCollectionFormatter {})
+        }
+        _ => Box::new(article::ArticleFormatter {}),
+    }
+}
+
+pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
+    let formatter = get_formatter(&item.entry_type);
+
+    let mut result = String::new();
+    if config.link_refs {
+        write!(result, "{}", format_anchor(&item.key)).unwrap();
+    }
+    if config.citation_style == CitationStyle::Index {
+        write!(result, "[{}] ", index).unwrap();
+    }
+    if config.render_key {
+        write!(result, "[{}] ", item.key).unwrap();
+    }
+
+    formatter.format(&mut result, item);
+
+    result
+}
 
 pub fn format_citation(
     reference: &Entry,
@@ -9,7 +50,7 @@ pub fn format_citation(
     no_author: bool,
     config: &Config,
 ) -> String {
-    let anchor = format_ref_anchor(&reference.key);
+    let anchor = key_to_anchor(&reference.key);
     let prefix = link_prefix.cloned().unwrap_or_default();
 
     if config.link_refs {
@@ -49,76 +90,64 @@ pub fn format_citation(
     }
 }
 
-pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
-    let mut result = String::new();
-    let anchor = format_ref_anchor(&item.key);
-
-    if config.link_refs {
-        write!(result, "<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,).unwrap();
-    }
-
-    if config.citation_style == CitationStyle::Index {
-        write!(result, "[{}] ", index).unwrap();
-    }
-    if config.render_key {
-        write!(result, "[{}] ", item.key).unwrap();
-    }
-
-    write!(
-        result,
-        "{} ({}): **{}**",
-        format_authors(item.author()),
-        format_date(item.date()),
-        item.title()
-            .map(|chunks| chunks.format_verbatim())
-            .unwrap_or_else(|| "Untitled".to_string()),
-    )
-    .unwrap();
-
-    if let Some(chunks) = item.journal() {
-        write!(result, ". *{}*", chunks.format_verbatim()).unwrap();
-    }
-
-    if let Some(volume) = item.volume() {
-        write!(result, " {}", volume).unwrap();
-
-        if let Some(number) = item.number() {
-            write!(result, ":{}", number.format_verbatim()).unwrap();
-        }
-    }
-
-    if let Some(ranges) = item.pages() {
-        write!(result, ", {}-{}", &ranges[0].start, &ranges[0].end).unwrap();
-    }
-
-    write!(result, ".").unwrap();
-
-    result
+fn format_anchor(key: &str) -> String {
+    let anchor = key_to_anchor(key);
+    format!("<a name=\"{}\" id=\"{}\"></a>", anchor, anchor,)
 }
 
-fn format_ref_anchor(key: &str) -> String {
+fn key_to_anchor(key: &str) -> String {
     format!("cite-ref-{}", key)
 }
 
-fn format_authors(authors: Option<Vec<Person>>) -> String {
-    let mut result = String::new();
+fn format_pages(ranges: &[Range<u32>]) -> String {
+    if ranges.is_empty() {
+        "???".to_string()
+    } else {
+        format!("{}-{}", &ranges[0].start, &ranges[0].end)
+    }
+}
+
+fn format_authors_opt(authors: Option<&Vec<Person>>) -> String {
     if let Some(authors) = authors {
-        for (idx, author) in authors.iter().enumerate() {
-            write!(result, "{}", author.name).unwrap();
-            if !author.given_name.is_empty() {
-                write!(result, " ").unwrap();
-                for part in author.given_name.split(' ') {
-                    write!(result, "{}", &part[..1]).unwrap();
-                }
-            }
-            if idx < authors.len() - 1 {
-                write!(result, ", ").unwrap();
+        format_authors(authors)
+    } else {
+        "Anonymous".to_string()
+    }
+}
+
+fn format_authors(authors: &[Person]) -> String {
+    let mut result = String::new();
+    for (idx, author) in authors.iter().enumerate() {
+        write!(result, "{}", author.name).unwrap();
+        if !author.given_name.is_empty() {
+            write!(result, " ").unwrap();
+            for part in author.given_name.split(' ') {
+                write!(result, "{}", &part[..1]).unwrap();
             }
         }
-    } else {
-        write!(result, "Anonymous").unwrap();
+        if idx < authors.len() - 1 {
+            write!(result, ", ").unwrap();
+        }
     }
     result
+}
+
+fn format_chunk_opt(chunks: Option<&[Chunk]>, alternative: &str) -> String {
+    chunks
+        .map(|chunks| chunks.format_verbatim())
+        .unwrap_or_else(|| alternative.to_string())
+}
+
+fn format_chunk(chunks: &[Chunk]) -> String {
+    chunks.format_verbatim()
+}
+
+fn format_chunks(chunks: &[Vec<Chunk>], sep: &str) -> String {
+    chunks
+        .iter()
+        .map(|chunk| chunk.format_verbatim())
+        .collect::<Vec<_>>()
+        .join(sep)
 }
 
 fn format_authors_citation(authors: Option<Vec<Person>>) -> String {
