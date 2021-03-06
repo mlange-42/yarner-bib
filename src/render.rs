@@ -179,18 +179,18 @@ fn render_citations_block(
 
 #[cfg(test)]
 mod test {
-    use crate::bib::parse_bibliography;
     use crate::config::{CitationStyle, Config};
+    use biblatex::Bibliography;
     use linked_hash_map::LinkedHashMap;
     use yarner_lib::TextBlock;
 
     const TEST_BIB: &str = r#"
 @book{Klabnik2018,
-    author = {"Klabnik, Steve and Nichols, Carol"},
-    title = {"The Rust Programming Language"},
-    year = {"2018"},
-    isbn = {"1593278284"},
-    publisher = {"No Starch Press"},
+    author = {Klabnik, Steve and Nichols, Carol},
+    title = {The Rust Programming Language},
+    year = {2018},
+    isbn = {1593278284},
+    publisher = {No Starch Press},
 }
 "#;
 
@@ -205,7 +205,7 @@ mod test {
             link_refs: true,
         };
 
-        let bib = parse_bibliography(TEST_BIB).unwrap();
+        let bib = Bibliography::parse(TEST_BIB).unwrap();
         let mut citations = LinkedHashMap::new();
 
         let mut block = TextBlock {
@@ -232,7 +232,7 @@ mod test {
             link_refs: true,
         };
 
-        let bib = parse_bibliography(TEST_BIB).unwrap();
+        let bib = Bibliography::parse(TEST_BIB).unwrap();
         let mut citations = LinkedHashMap::new();
 
         let mut block = TextBlock {

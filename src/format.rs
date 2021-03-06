@@ -149,16 +149,16 @@ pub fn format_date(date: Option<Date>) -> String {
 
 #[cfg(test)]
 mod test {
-    use crate::bib::parse_bibliography;
     use crate::config::{CitationStyle, Config};
+    use biblatex::Bibliography;
 
     const TEST_BIB: &str = r#"
 @book{Klabnik2018,
-    author = {"Klabnik, Steve and Nichols, Carol"},
-    title = {"The Rust Programming Language"},
-    year = {"2018"},
-    isbn = {"1593278284"},
-    publisher = {"No Starch Press"},
+    author = {Klabnik, Steve and Nichols, Carol},
+    title = {The Rust Programming Language},
+    year = {2018},
+    isbn = {1593278284},
+    publisher = {No Starch Press},
 }
 "#;
 
@@ -173,7 +173,7 @@ mod test {
             link_refs: true,
         };
 
-        let bib = parse_bibliography(TEST_BIB).unwrap();
+        let bib = Bibliography::parse(TEST_BIB).unwrap();
 
         assert_eq!(
             super::format_citation(bib.get("Klabnik2018").unwrap(), 1, None, false, &config),

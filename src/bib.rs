@@ -11,11 +11,6 @@ pub fn load_bibliography<P: AsRef<Path>>(file: P) -> Result<Bibliography, Box<dy
         )
     })?;
 
-    parse_bibliography(&content)
+    Bibliography::parse(&content)
         .ok_or_else(|| format!("No valid bibliography in file {}", file.as_ref().display()).into())
-}
-
-pub fn parse_bibliography(content: &str) -> Option<Bibliography> {
-    let str = content.replace("\"", "");
-    Bibliography::parse(&str)
 }
