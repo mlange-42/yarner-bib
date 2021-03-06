@@ -11,7 +11,7 @@ impl EntryFormatter for ArticleFormatter {
             "{} ({}): **{}**",
             super::format_authors(item.author()),
             super::format_date(item.date()),
-            super::format_title(item.title()),
+            super::format_chunk_opt(item.title(), "Untitled"),
         )
         .unwrap();
 

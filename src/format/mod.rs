@@ -1,4 +1,5 @@
 mod article;
+mod book;
 
 use crate::config::{CitationStyle, Config};
 use biblatex::{Chunk, ChunksExt, Date, DateValue, Entry, EntryType, Person};
@@ -12,6 +13,10 @@ static FORMATTERS: Lazy<HashMap<String, Box<dyn EntryFormatter>>> = Lazy::new(||
     map.insert(
         EntryType::Article.to_string(),
         Box::new(article::ArticleFormatter {}),
+    );
+    map.insert(
+        EntryType::Book.to_string(),
+        Box::new(book::BookFormatter {}),
     );
 
     map
@@ -41,6 +46,7 @@ pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
     }
 
     formatter.format(&mut result, item);
+
     result
 }
 
@@ -129,10 +135,22 @@ fn format_authors(authors: Option<Vec<Person>>) -> String {
     result
 }
 
-fn format_title(title: Option<&[Chunk]>) -> String {
-    title
+fn format_chunk_opt(chunks: Option<&[Chunk]>, alternative: &str) -> String {
+    chunks
         .map(|chunks| chunks.format_verbatim())
-        .unwrap_or_else(|| "Untitled".to_string())
+        .unwrap_or_else(|| alternative.to_string())
+}
+
+fn format_chunk(chunks: &[Chunk]) -> String {
+    chunks.format_verbatim()
+}
+
+fn format_chunks(chunks: &[Vec<Chunk>], sep: &str) -> String {
+    chunks
+        .iter()
+        .map(|chunk| chunk.format_verbatim())
+        .collect::<Vec<_>>()
+        .join(sep)
 }
 
 fn format_authors_citation(authors: Option<Vec<Person>>) -> String {
