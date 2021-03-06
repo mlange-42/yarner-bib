@@ -1,5 +1,6 @@
 mod article;
 mod book;
+mod inbook;
 
 use crate::config::{CitationStyle, Config};
 use biblatex::{Chunk, ChunksExt, Date, DateValue, Entry, EntryType, Person};
@@ -17,6 +18,19 @@ static FORMATTERS: Lazy<HashMap<String, Box<dyn EntryFormatter>>> = Lazy::new(||
     map.insert(
         EntryType::Book.to_string(),
         Box::new(book::BookFormatter {}),
+    );
+
+    map.insert(
+        EntryType::InBook.to_string(),
+        Box::new(inbook::InBookFormatter {}),
+    );
+    map.insert(
+        EntryType::InCollection.to_string(),
+        Box::new(inbook::InBookFormatter {}),
+    );
+    map.insert(
+        EntryType::InProceedings.to_string(),
+        Box::new(inbook::InBookFormatter {}),
     );
 
     map
@@ -114,23 +128,27 @@ fn format_pages(ranges: &[Range<u32>]) -> String {
     }
 }
 
-fn format_authors(authors: Option<Vec<Person>>) -> String {
-    let mut result = String::new();
+fn format_authors_opt(authors: Option<&Vec<Person>>) -> String {
     if let Some(authors) = authors {
-        for (idx, author) in authors.iter().enumerate() {
-            write!(result, "{}", author.name).unwrap();
-            if !author.given_name.is_empty() {
-                write!(result, " ").unwrap();
-                for part in author.given_name.split(' ') {
-                    write!(result, "{}", &part[..1]).unwrap();
-                }
-            }
-            if idx < authors.len() - 1 {
-                write!(result, ", ").unwrap();
+        format_authors(authors)
+    } else {
+        "Anonymous".to_string()
+    }
+}
+
+fn format_authors(authors: &[Person]) -> String {
+    let mut result = String::new();
+    for (idx, author) in authors.iter().enumerate() {
+        write!(result, "{}", author.name).unwrap();
+        if !author.given_name.is_empty() {
+            write!(result, " ").unwrap();
+            for part in author.given_name.split(' ') {
+                write!(result, "{}", &part[..1]).unwrap();
             }
         }
-    } else {
-        write!(result, "Anonymous").unwrap();
+        if idx < authors.len() - 1 {
+            write!(result, ", ").unwrap();
+        }
     }
     result
 }

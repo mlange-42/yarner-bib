@@ -2,9 +2,9 @@ use crate::format::EntryFormatter;
 use biblatex::Entry;
 use std::fmt::Write;
 
-pub struct BookFormatter {}
+pub struct InBookFormatter {}
 
-impl EntryFormatter for BookFormatter {
+impl EntryFormatter for InBookFormatter {
     fn format(&self, result: &mut dyn Write, item: &Entry) {
         write!(
             result,
@@ -14,6 +14,18 @@ impl EntryFormatter for BookFormatter {
             super::format_chunk_opt(item.title(), "Untitled"),
         )
         .unwrap();
+
+        write!(
+            result,
+            ". In: {} (eds.): {}",
+            super::format_authors_opt(item.editors().get(0).map(|e| &e.0)),
+            super::format_chunk_opt(item.book_title(), "Untitled"),
+        )
+        .unwrap();
+
+        if let Some(ranges) = item.pages() {
+            write!(result, ", pp. {}", super::format_pages(&ranges[..])).unwrap();
+        }
 
         if let Some(chunks) = item.publisher() {
             write!(result, ". *{}*", super::format_chunks(&chunks, ", ")).unwrap();

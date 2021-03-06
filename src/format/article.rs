@@ -9,7 +9,7 @@ impl EntryFormatter for ArticleFormatter {
         write!(
             result,
             "{} ({}): **{}**",
-            super::format_authors(item.author()),
+            super::format_authors_opt(item.author().as_ref()),
             super::format_date(item.date()),
             super::format_chunk_opt(item.title(), "Untitled"),
         )
