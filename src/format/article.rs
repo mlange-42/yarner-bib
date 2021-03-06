@@ -1,4 +1,3 @@
-use crate::config::{CitationStyle, Config};
 use crate::format::EntryFormatter;
 use biblatex::{ChunksExt, Entry};
 use std::fmt::Write;
@@ -6,20 +5,7 @@ use std::fmt::Write;
 pub struct ArticleFormatter {}
 
 impl EntryFormatter for ArticleFormatter {
-    fn format(&self, item: &Entry, index: usize, config: &Config) -> String {
-        let mut result = String::new();
-
-        if config.link_refs {
-            write!(result, "{}", super::format_anchor(&item.key)).unwrap();
-        }
-
-        if config.citation_style == CitationStyle::Index {
-            write!(result, "[{}] ", index).unwrap();
-        }
-        if config.render_key {
-            write!(result, "[{}] ", item.key).unwrap();
-        }
-
+    fn format(&self, result: &mut dyn Write, item: &Entry) {
         write!(
             result,
             "{} ({}): **{}**",
@@ -46,7 +32,5 @@ impl EntryFormatter for ArticleFormatter {
         }
 
         write!(result, ".").unwrap();
-
-        result
     }
 }

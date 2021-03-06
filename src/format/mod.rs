@@ -16,18 +16,32 @@ static FORMATTERS: Lazy<HashMap<String, Box<dyn EntryFormatter>>> = Lazy::new(||
 
     map
 });
+
 static DEFAULT_FORMATTER: Lazy<Box<dyn EntryFormatter>> =
     Lazy::new(|| Box::new(article::ArticleFormatter {}));
 
 trait EntryFormatter: Send + Sync {
-    fn format(&self, item: &Entry, index: usize, config: &Config) -> String;
+    fn format(&self, write: &mut dyn Write, item: &Entry);
 }
 
 pub fn format_reference(item: &Entry, index: usize, config: &Config) -> String {
     let formatter = FORMATTERS
         .get(&item.entry_type.to_string())
         .unwrap_or(&DEFAULT_FORMATTER);
-    formatter.format(item, index, config)
+
+    let mut result = String::new();
+    if config.link_refs {
+        write!(result, "{}", format_anchor(&item.key)).unwrap();
+    }
+    if config.citation_style == CitationStyle::Index {
+        write!(result, "[{}] ", index).unwrap();
+    }
+    if config.render_key {
+        write!(result, "[{}] ", item.key).unwrap();
+    }
+
+    formatter.format(&mut result, item);
+    result
 }
 
 pub fn format_citation(
